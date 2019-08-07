@@ -26,6 +26,7 @@ done
 shift $((OPTIND -1))
 
 list_dirs_recursive() {
+
   readlink -f "${1}"
 
   for child in "${1}"/*
@@ -38,19 +39,19 @@ list_dirs_recursive() {
 }
 
 list_all_recursive() {
-  if [[ -L "${1}" ]]
-  then
-    readlink -n "${child}"
-    echo "-^>"
-    readlink -f "${child}"
-  else
-    readlink -f "${1}"
-  fi
-
   for child in "${1}"/*
   do
-    if [[ -d "${child}" ]]
+    if [[ -L "${child}" ]]
     then
+      echo -n "${child}"
+      echo -n " -> "
+      readlink -f "${child}"
+    elif [[ -f "${child}" ]]
+    then
+      readlink -f "${child}"
+    elif [[ -d "${child}" ]]
+    then
+      readlink -f "${child}"
       list_all_recursive "${child}"
     fi
   done
@@ -61,7 +62,7 @@ list_files() {
   do
     for child in "${file}"/*
     do
-      if [[ -f "{child}" ]]
+      if [[ -f "${child}" && ! -L "${child}" && ! -d "${child}" ]]
       then
         readlink -f "${child}"
       fi
@@ -76,8 +77,8 @@ list_symlinks() {
     do
       if [[ -L "${child}" ]]
       then
-        readlink -n "${child}"
-        echo "-^>"
+        echo -n "${child}"
+        echo -n " -> "
         readlink -f "${child}"
       fi
     done
